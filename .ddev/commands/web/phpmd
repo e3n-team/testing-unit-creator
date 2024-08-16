@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: runs phpmd
+## Usage: phpmd
+## Example: "ddev phpmd"
+
+vendor/bin/phpmd src/,tests/ text phpmd-ruleset.xml

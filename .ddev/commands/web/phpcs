@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: runs phpcs
+## Usage: phpcs
+## Example: "ddev phpcs"
+
+vendor/bin/phpcs -s -p --standard=phpcs.xml.dist "$1"
