@@ -1,0 +1,8 @@
+
+variables:
+    TEST_RESULT_DIRECTORY: testresult
+
+include:
+    -   local: '.gitlab-ci/test/.phpunit_template.yaml'
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/test/phpunit_unit.yaml'

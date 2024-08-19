@@ -1,10 +1,24 @@
 {
     "name": "e3n/testing-unit-creator",
     "type": "library",
+    "description": "Creates the unit under test while mocking dependencies.",
+    "keywords": [
+        "dev",
+        "testing",
+        "phpunit",
+        "mock",
+        "e3n"
+    ],
+    "homepage": "https://e3n.de",
+    "license": "MIT",
     "authors": [
         {
             "name": "Benedikt Fabian",
             "email": "b.fabian@e3n.de"
+        },
+        {
+            "name": "Mike vom Scheidt",
+            "email": "m.vomscheidt@e3n.de"
         },
         {
             "name": "Marius Klee",
@@ -15,18 +29,31 @@
         "private-packagist": {
             "type": "composer",
             "url": "https://repo.packagist.com/e3n/"
-      }
+        }
     },
     "require": {
-        "php": "^8.1",
-        "e3n/symfony-dev": "^6.4"
+        "php": ">=8.1",
+        "phpdocumentor/reflection-docblock": "^5.4",
+        "phpunit/phpunit": "^9.6 || ^10.5 || ^11.3"
+    },
+    "require-dev": {
+        "e3n/shared-dev": "^2.0",
+        "phpunit/phpcov": "^8.2 || ^9.0 || ^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "e3n\\Test\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "e3n\\Test\\Tests\\": "tests/"
+        }
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
             "e3n/composer-plugin-copy-file": true,
-            "symfony/runtime": true,
-            "symfony/flex": true,
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
     }

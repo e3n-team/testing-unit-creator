@@ -1,23 +1,27 @@
-image: $CI_REGISTRY/e3n/devops/docker-image-php:8.2-10
+image: $CI_REGISTRY/e3n/devops/docker-image-php:8.1-3
 
 include:
     -   project: 'e3n/symfony/symfony-ci'
-        file: '/template.yaml'
+        file: '/setup/composer.yaml'
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/static_code_analysis/index.yaml'
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/security/index.yaml'
+    -   local: '.gitlab-ci/test/index.yaml'
+    -   local: '.gitlab-ci/coverage/index.yaml'
 
 stages:
     - setup
     - static_code_analysis
     - security
     - test
-    - build
 
-variables:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_USER: db
-    MYSQL_PASSWORD: db
-    MYSQL_DATABASE: db_test
+setup:composer:
+    artifacts:
+        paths:
+            - vendor/
+            - composer.lock
 
-.phpunit_template:
-    services:
-        -   name: mysql:8.0
-            alias: db
+phpstan:
+    needs:
+        - !reference [ .static_code_analysis_template, needs ]
