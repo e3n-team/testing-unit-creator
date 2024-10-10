@@ -1,93 +1,232 @@
-# Testing Unit Creator
+# e3n Testing Unit Creator
+The testing-unit-creator by e3n is a user-friendly tool designed to simplify the creation of units under test in your PHPUnit test cases.
+Whether you're working with regular or abstract classes, this tool provides the flexibility to generate testable units efficiently.
 
+## Features
 
+- creates the unit under test
+- mocks the dependencies of your unit
+- provides access to the mocks
+- supports abstract unit under test
+
+## Installation
+
+```bash
+composer require e3n/testing-unit-creator --dev
+```
 
 ## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Use the `UnitCreatorTrait`
+The features are provided by the `UnitCreatorTrait`. There are two different ways for using this trait.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+#### 1) Implement your own abstract test case class (recommended)
+Implement your own abstract TestCase class.
+Your custom test case should use the `UnitCreatorTrait` and extend from PHPUnit's `TestCase`.
 
-## Add your files
+```php
+use e3n\Test\UnitCreatorTrait;
+use PHPUnit\Framework\TestCase;
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+/**
+ * @template UNIT of object
+ */
+abstract class MyAbstractTestCase extends TestCase
+{
 
+    /** @use UnitCreatorTrait<UNIT> */
+    use UnitCreatorTrait;
+    
+    protected function tearDown(): void
+    {
+        $this->clearUnit();
+    }
+
+    ...
+}
 ```
-cd existing_repo
-git remote add origin https://gitlab.e3n.io/e3n/shared/testing-unit-creator.git
-git branch -M develop
-git push -uf origin develop
+
+Your test cases can now easily extend from your abstract test case.
+Provide the `@extends` annotation for code completion.
+
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
+{
+}
 ```
 
-## Integrate with your tools
+#### 2) Use the UnitCreatorTrait in each test case
+Instead of implementing an abstract test case for your project your test cases can use the `UnitCreatorTrait` directly.
+We do not recommend this way due to bugs in the phpstorm's code completion.
 
-- [ ] [Set up project integrations](https://gitlab.e3n.io/e3n/shared/testing-unit-creator/-/settings/integrations)
+```php
+use e3n\Test\UnitCreatorTrait;
+use PHPUnit\Framework\TestCase;
 
-## Collaborate with your team
+class MyClassTest extends TestCase
+{
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+    /** @use UnitCreatorTrait<MyClass> */
+    use UnitCreatorTrait;
+    
+    protected function tearDown(): void
+    {
+        $this->clearUnit();
+    }
 
-## Test and Deploy
+    ...
+}
+```
 
-Use the built-in continuous integration in GitLab.
+### Provide the class of your unit under test
+There are tree ways to provide the class of your unit under test to the `UnitCreatorTrait`.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### 1) `@covers` annotation
+The `UnitCreatorTrait` uses the first `@covers` annotation of your test case for determining your unit under test.
 
-***
+```php
+/**
+ * @covers \Fully\Qualified\Class\Name\Of\MyClass
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
+{
+}
+```
 
-# Editing this README
+#### 2) `CoversClass` attribute
+The `UnitCreatorTrait` uses the first `CoversClass` attribute of your test case for determining your unit under test.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
+#[CoversClass(MyClass::class)]
+class MyClassTest extends MyAbstractTestCase
+{
+}
+```
 
-## Suggestions for a good README
+#### 3) `getUnitClass` method
+You can implement the method `getUnitClass` to tell the `UnitCreatorTrait` the class of your unit under test.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
+{
+    /** @return class-string<MyClass> */
+    protected function getUnitClass(): string
+    {
+        return MyClass::class;
+    }
+}
+```
 
-## Name
-Choose a self-explaining name for your project.
+### Access your unit under test
+#### 1) regular class
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```php
+class MyClassTest extends MyAbstractTestCase
+{
+    public function testMyMethod(): void
+    {
+        $unit   = $this->getUnit();
+        $actual = $unit->myMethod();
+        
+        self::assertEquals('expectedValue', $actual);
+    }
+}
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+#### 2) abstract class
+When testing an abstract class the `UnitCreatorTrait` provides a partial mock of your unit under test.
+So you have the possibility to mock the behaviour of abstract methods.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```php
+class MyClassTest extends MyAbstractTestCase
+{
+    public function testMyMethod(): void
+    {
+        $unit   = $this->getAbstractUnit();
+        
+        $unit->expects(self::once())
+         ->method('abstractMethod')
+         ->with('parameter')
+         ->willReturn('expectedValue');
+        
+        $actual = $unit->myMethod();
+        
+        self::assertEquals('expectedValue', $actual);
+    }
+}
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### Access mocked dependencies
+When creating the unit under test the `UnitCreatorTrait` mocks the dependencies.
+You can access those mocks by calling `$this->mock()`.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```php
+class MyDependency
+{
+    public function methodA(): string
+    {
+        return 'lol';
+    }
+}
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+class MyClass
+{
+    public function __construct(private MyDependency $dependency)
+    {
+    }
+    
+    public function methodB(): string
+    {
+        return $this->dependency->methodA();
+    }
+}
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+class MyClassTest extends MyAbstractTestCase
+{
+    public function testMethodB(): void
+    {
+        $unit   = $this->getUnit();
+        
+        $this->mock(MyDependency::class)
+            ->method('methodA')
+            ->willReturn('rofl');
+        
+        $actual = $unit->methodB();
+        
+        self::assertEquals('rofl', $actual);
+    }
+}
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Provide builtin constructor parameters
+When your unit under test requires some builtin parameters in the constructor you have to provide them by implementing the method `getUnitConstructorParameters`.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```php
+class MyClass
+{
+    public function __construct(private string $a, private int $b)
+    {
+    }
+}
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+class MyClassTest extends MyAbstractTestCase
+{
+    protected function getUnitConstructorParameters(): array
+    {
+        return [
+            'a' => 'rofl mao',
+            'b' => 1337,
+        ];
+    }
+}
+```

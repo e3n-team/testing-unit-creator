@@ -1,0 +1,38 @@
+#!/bin/bash
+
+## Description: runs all php static code analyses
+## Usage: php-static
+## Example: "ddev php-static"
+
+CURRENT_DIR=$(dirname "$0")
+source "${CURRENT_DIR}/../../bash/colors.sh"
+
+phpcs() {
+  .ddev/commands/web/phpcs
+}
+
+phpmd() {
+  .ddev/commands/web/phpmd
+}
+
+phpstan() {
+  .ddev/commands/web/phpstan
+}
+
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+echo -en "${bldblk}${bakgrn}> phpcs                            ${txtrst} \n"
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+
+phpcs
+
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+echo -en "${bldblk}${bakgrn}> phpmd                            ${txtrst} \n"
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+
+phpmd
+
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+echo -en "${bldblk}${bakgrn}> phpstan                            ${txtrst} \n"
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+
+phpstan

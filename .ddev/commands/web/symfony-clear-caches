@@ -1,0 +1,9 @@
+#!/bin/bash
+
+## Description: Clear symfony caches for prod,dev and test (you can pass further options like --no-warmup as well)
+## Usage: symfony-clear-caches [options]
+## Example: "ddev symfony-clear-caches"
+
+console cache:clear --env=prod $@
+console cache:clear --env=dev $@
+console cache:clear --env=test $@

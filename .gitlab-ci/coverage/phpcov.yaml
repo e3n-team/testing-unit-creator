@@ -1,0 +1,14 @@
+include:
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/coverage/phpcov.yaml'
+
+phpunit:coverage:
+    needs:
+        -   job: phpunit:unit
+            parallel:
+                matrix:
+                    -   PHP_IMAGE: "8.1-3"
+                        PHPUNIT_VERSION: "9.6"
+    script:
+        - vendor/bin/phpcov merge --text php://stdout --html=./${PHPUNIT_RESULT_DIRECTORY}/cov_html ./${PHPUNIT_RESULT_DIRECTORY}
+

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: runs phpcbf
+## Usage: phpcbf
+## Example: "ddev phpcbf"
+
+vendor/bin/phpcbf --standard=phpcs.xml.dist

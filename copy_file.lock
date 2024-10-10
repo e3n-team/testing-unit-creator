@@ -1,0 +1,8 @@
+{
+    "e3n-shared-dev-ddev-bash": 1,
+    "e3n-shared-dev-ddev-command-web": 1,
+    "e3n-shared-dev-deployer": 1,
+    "e3n-shared-dev-php_codesniffer": 1,
+    "e3n-shared-dev-phpmd": 1,
+    "e3n-shared-dev-phpstan": 1
+}
