@@ -1,140 +1,232 @@
 # e3n Testing Unit Creator
->The testing-unit-creator by e3n is a user-friendly tool designed 
-to simplify the creation of testing units for PHP classes. Whether you're working 
-with regular or abstract classes, this tool provides the flexibility to generate 
-testable units efficiently, making your testing process more versatile and streamlined.
+The testing-unit-creator by e3n is a user-friendly tool designed to simplify the creation of units under test in your PHPUnit test cases.
+Whether you're working with regular or abstract classes, this tool provides the flexibility to generate testable units efficiently.
 
+## Features
+
+- creates the unit under test
+- mocks the dependencies of your unit
+- provides access to the mocks
+- supports abstract unit under test
 
 ## Installation
 
-```
+```bash
 composer require e3n/testing-unit-creator --dev
 ```
 
 ## Getting started
-The testing-unit-creator offers a flexible approach to creating testing units 
-for your PHP classes. Depending on your preference and the structure 
-of your tests, you can create units either by using attributes 
-or by overriding method getUnitClass(). Our recommended approach 
-is to implement a custom TestCase that allows you to create a unit via an annotation
 
-## Recommended Way
-We recommend implementing your own custom TestCase to fully
-leverage the testing-unit-creator package.
-This allows you to create testable units in a consistent and efficient manner.
-Your custom TestCase should extend from PHPUnit's TestCase, KernelTestCase, or any other base test class that
-suits your project’s needs. It's important to implement the TestCase with the following structure:
+### Use the `UnitCreatorTrait`
+The features are provided by the `UnitCreatorTrait`. There are two different ways for using this trait.
 
-```
+#### 1) Implement your own abstract test case class (recommended)
+Implement your own abstract TestCase class.
+Your custom test case should use the `UnitCreatorTrait` and extend from PHPUnit's `TestCase`.
+
+```php
+use e3n\Test\UnitCreatorTrait;
+use PHPUnit\Framework\TestCase;
+
 /**
  * @template UNIT of object
  */
-class MyTestCase extends TestCase
+abstract class MyAbstractTestCase extends TestCase
 {
 
     /** @use UnitCreatorTrait<UNIT> */
     use UnitCreatorTrait;
+    
+    protected function tearDown(): void
+    {
+        $this->clearUnit();
+    }
 
     ...
-
 }
 ```
-In this example, the @template annotation defines a type template for the unit being tested, 
-ensuring strong typing and improved IDE autocompletion. 
-This setup ensures that your custom TestCase is fully compatible with the 
-testing-unit-creator package, allowing you to create testable units 
-in a streamlined and efficient way.
 
-## Creating and Passing Units in Your Test Class
-To effectively test units in your project using the testing-unit-creator package, 
-you need to create and manage instances of the unit being tested within your test classes. 
-The package provides a streamlined way to do this, either through attributes or methods, 
-ensuring that your tests are consistent and maintainable.
+Your test cases can now easily extend from your abstract test case.
+Provide the `@extends` annotation for code completion.
 
-### Passing Unit By Attribute
-One way to specify the unit class directly in your test class is by using attributes.
-This approach allows you to define the class being tested and any related
-configuration right within the class declaration.
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
+{
+}
 ```
+
+#### 2) Use the UnitCreatorTrait in each test case
+Instead of implementing an abstract test case for your project your test cases can use the `UnitCreatorTrait` directly.
+We do not recommend this way due to bugs in the phpstorm's code completion.
+
+```php
+use e3n\Test\UnitCreatorTrait;
+use PHPUnit\Framework\TestCase;
+
+class MyClassTest extends TestCase
+{
+
+    /** @use UnitCreatorTrait<MyClass> */
+    use UnitCreatorTrait;
+    
+    protected function tearDown(): void
+    {
+        $this->clearUnit();
+    }
+
+    ...
+}
+```
+
+### Provide the class of your unit under test
+There are tree ways to provide the class of your unit under test to the `UnitCreatorTrait`.
+
+#### 1) `@covers` annotation
+The `UnitCreatorTrait` uses the first `@covers` annotation of your test case for determining your unit under test.
+
+```php
+/**
+ * @covers \Fully\Qualified\Class\Name\Of\MyClass
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
+{
+}
+```
+
+#### 2) `CoversClass` attribute
+The `UnitCreatorTrait` uses the first `CoversClass` attribute of your test case for determining your unit under test.
+
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
 #[CoversClass(MyClass::class)]
-#[CoversClass(UnitCreatorTrait::class)]
-#[Group('unit')]
-class MyClassTest extends MyTestCase
+class MyClassTest extends MyAbstractTestCase
 {
-```
-### Passing Unit By Method
-Alternatively, you can dynamically specify the unit class by implementing the getUnitClass 
-method within your test class. This method should return the class name of the unit you intend to test.
-```
-class MyClassTest extends MyTestCase
-{
-
-...
-
-/** @return class-string<MyClass> */
-protected function getUnitClass(): string
-{
-    return MyClass::class;
 }
 ```
-### Passing Unit By ...
 
+#### 3) `getUnitClass` method
+You can implement the method `getUnitClass` to tell the `UnitCreatorTrait` the class of your unit under test.
 
-## Creating and Accessing the Unit
-Once the unit class is defined, whether by attribute or method, you can create and access an instance of 
-it within your test methods using the getUnit() method provided by the UnitCreatorTrait.
-### Basic Unit Creation
-```
-public function testMyMethod(): void
+```php
+/**
+ * @extends MyAbstractTestCase<MyClass>
+ */
+class MyClassTest extends MyAbstractTestCase
 {
-    $unit = $this->getUnit();
-    
-    $result = $unit->someMethod();
-    
-    $this->assertEquals('expectedValue', $result);
+    /** @return class-string<MyClass> */
+    protected function getUnitClass(): string
+    {
+        return MyClass::class;
+    }
 }
 ```
-The getUnit() method automatically instantiates the unit class based on your configuration. 
-This ensures that the unit is ready to be tested without the need for manual setup, making your tests more efficient 
-and easier to maintain.
 
-### Creating abstract unit
-In some cases, you might need to work with abstract classes. 
-The testing-unit-creator package allows you to instantiate abstract units by using the getAbstractUnit() method.
-```
-public function testMyMethod(): void
+### Access your unit under test
+#### 1) regular class
+
+```php
+class MyClassTest extends MyAbstractTestCase
 {
-    $unit          = $this->getAbstractUnit();
-    $expectedValue = 'Test';
+    public function testMyMethod(): void
+    {
+        $unit   = $this->getUnit();
+        $actual = $unit->myMethod();
+        
+        self::assertEquals('expectedValue', $actual);
+    }
+}
+```
 
-    $unit->expects(self::once())
+#### 2) abstract class
+When testing an abstract class the `UnitCreatorTrait` provides a partial mock of your unit under test.
+So you have the possibility to mock the behaviour of abstract methods.
+
+```php
+class MyClassTest extends MyAbstractTestCase
+{
+    public function testMyMethod(): void
+    {
+        $unit   = $this->getAbstractUnit();
+        
+        $unit->expects(self::once())
          ->method('abstractMethod')
-         ->with('TestArgument')
-         ->willReturn($expectedValue);
-
-    $result = $unit->callAbstractMethod('TestArgument');
-
-    self::assertEquals($expectedValue, $result);
+         ->with('parameter')
+         ->willReturn('expectedValue');
+        
+        $actual = $unit->myMethod();
+        
+        self::assertEquals('expectedValue', $actual);
+    }
 }
 ```
 
-### Creating Mocks
-Mocks are essential for isolating the unit under test from its dependencies. The testing-unit-creator package provides 
-an easy way to create mocks of classes, which you can then use to simulate the behavior of dependencies
-```
+### Access mocked dependencies
+When creating the unit under test the `UnitCreatorTrait` mocks the dependencies.
+You can access those mocks by calling `$this->mock()`.
 
-public function testMockExpectation(): void
+```php
+class MyDependency
 {
-    $this->mock(ClassName::class)
-         ->expects(self::once())
-         ->method('methodName')
-         ->willReturn('B');
+    public function methodA(): string
+    {
+        return 'lol';
+    }
+}
 
-    $actual = $this->getUnit()->callMethod();
+class MyClass
+{
+    public function __construct(private MyDependency $dependency)
+    {
+    }
+    
+    public function methodB(): string
+    {
+        return $this->dependency->methodA();
+    }
+}
 
-    self::assertSame('B', $actual);
+class MyClassTest extends MyAbstractTestCase
+{
+    public function testMethodB(): void
+    {
+        $unit   = $this->getUnit();
+        
+        $this->mock(MyDependency::class)
+            ->method('methodA')
+            ->willReturn('rofl');
+        
+        $actual = $unit->methodB();
+        
+        self::assertEquals('rofl', $actual);
+    }
 }
 ```
 
+### Provide builtin constructor parameters
+When your unit under test requires some builtin parameters in the constructor you have to provide them by implementing the method `getUnitConstructorParameters`.
 
+```php
+class MyClass
+{
+    public function __construct(private string $a, private int $b)
+    {
+    }
+}
 
+class MyClassTest extends MyAbstractTestCase
+{
+    protected function getUnitConstructorParameters(): array
+    {
+        return [
+            'a' => 'rofl mao',
+            'b' => 1337,
+        ];
+    }
+}
+```
