@@ -33,7 +33,7 @@ trait UnitCreatorTrait
     /** @var (UNIT&MockObject)|null */
     private ?MockObject $abstractUnit = null;
 
-    /** @var array<string, MockObject> */
+    /** @var array<string, array<null|int|string, MockObject>> */
     private array $mocks = [];
 
     /** @return UNIT */
@@ -101,14 +101,14 @@ trait UnitCreatorTrait
      * @param class-string<MOCK> $class
      * @return MOCK&MockObject
      */
-    protected function mock(string $class): object
+    protected function mock(string $class, null|int|string $id = null): object
     {
-        if (isset($this->mocks[$class]) === false) {
-            $this->mocks[$class] = $this->createMock($class);
+        if (isset($this->mocks[$class][$id]) === false) {
+            $this->mocks[$class][$id] = $this->createMock($class);
         }
 
         /** @var MOCK&MockObject $mock */
-        $mock = $this->mocks[$class];
+        $mock = $this->mocks[$class][$id];
 
         return $mock;
     }
@@ -208,13 +208,26 @@ trait UnitCreatorTrait
 
     /**
      * @param ReflectionClass<UNIT> $unitReflection
-     * @return array<string, mixed>
+     * @return array<int, mixed>
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity))
      */
     private function buildParameters(ReflectionClass $unitReflection): array
     {
         $parameters               = $this->getUnitConstructorParameters();
         $parameterReflections     = $unitReflection->getConstructor()?->getParameters() ?? [];
+        $parametersTypeCount      = [];
+        $sortedParameters         = [];
         $missingBuiltinParameters = [];
+
+        foreach ($parameterReflections as $parameterReflection) {
+            /** @var ReflectionNamedType $parameterReflectionType */
+            /** @var class-string<object> $parameterType */
+            $parameterReflectionType = $parameterReflection->getType();
+            $parameterType           = $parameterReflectionType->getName();
+
+            $parametersTypeCount[$parameterType] = ($parametersTypeCount[$parameterType] ?? 0) + 1;
+        }
 
         foreach ($parameterReflections as $parameterReflection) {
             /** @var ReflectionNamedType $parameterReflectionType */
@@ -225,6 +238,16 @@ trait UnitCreatorTrait
             $parameterType = $parameterReflectionType->getName();
 
             if (array_key_exists($parameterName, $parameters)) {
+                if ($parameterReflection->isVariadic() === false || is_array($parameters[$parameterName]) === false) {
+                    $sortedParameters[] = $parameters[$parameterName];
+
+                    continue;
+                }
+
+                foreach ($parameters[$parameterName] as $item) {
+                    $sortedParameters[] = $item;
+                }
+
                 continue;
             }
 
@@ -233,8 +256,8 @@ trait UnitCreatorTrait
                 continue;
             }
 
-            $parameters[$parameterName]  = $this->mock($parameterType);
-            $this->mocks[$parameterType] = $parameters[$parameterName];
+            $mockId             = $parametersTypeCount[$parameterType] > 1 ? $parameterName : null;
+            $sortedParameters[] = $this->mock($parameterType, $mockId);
         }
 
         if ($missingBuiltinParameters !== []) {
@@ -247,6 +270,6 @@ trait UnitCreatorTrait
             );
         }
 
-        return $parameters;
+        return $sortedParameters;
     }
 }
