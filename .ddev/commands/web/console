@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: Run console
+## Usage: console command [options] [arguments]
+## Example: "ddev console cache:flush"
+
+bin/console $@

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+## Description: Setups the project
+## Usage: setup
+## Example: "ddev setup"
+
+CURRENT_DIR=$(dirname "$0")
+source "${CURRENT_DIR}/../../bash/colors.sh"
+
+composer_install() {
+  composer install
+  composer install --working-dir=./.deployer
+}
+
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+echo -en "${bldblk}${bakgrn}> COMPOSER                          ${txtrst} \n"
+echo -en "${bldblk}${bakgrn}====================================${txtrst} \n"
+
+composer_install

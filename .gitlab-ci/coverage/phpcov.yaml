@@ -1,0 +1,15 @@
+include:
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/coverage/phpcov.yaml'
+
+phpunit:coverage:
+    image: $CI_REGISTRY/e3n/devops/docker-image-php:8.3-3
+    needs:
+        -   job: phpunit:unit
+            parallel:
+                matrix:
+                    -   PHP_IMAGE: "8.3-3"
+                        PHPUNIT_VERSION: "11.3"
+    script:
+        - vendor/bin/phpcov merge --text php://stdout --html=./${PHPUNIT_RESULT_DIRECTORY}/cov_html ./${PHPUNIT_RESULT_DIRECTORY}
+

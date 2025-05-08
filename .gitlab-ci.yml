@@ -1,0 +1,27 @@
+image: $CI_REGISTRY/e3n/devops/docker-image-php:8.1-3
+
+include:
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/setup/composer.yaml'
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/static_code_analysis/index.yaml'
+    -   project: 'e3n/symfony/symfony-ci'
+        file: '/security/index.yaml'
+    -   local: '.gitlab-ci/test/index.yaml'
+    -   local: '.gitlab-ci/coverage/index.yaml'
+
+stages:
+    - setup
+    - static_code_analysis
+    - security
+    - test
+
+setup:composer:
+    artifacts:
+        paths:
+            - vendor/
+            - composer.lock
+
+phpstan:
+    needs:
+        - !reference [ .static_code_analysis_template, needs ]
